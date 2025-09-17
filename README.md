@@ -1,3 +1,6 @@
+
+definizione dei pin corretta:  https://github.com/arendst/Tasmota/discussions/19487
+
 # FIX 1
 https://github.com/Bodmer/TFT_eSPI/issues/3304
 per il problema di loop bisogna usare la versione 2.0.14 delle board ESP32 

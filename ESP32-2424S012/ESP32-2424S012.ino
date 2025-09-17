@@ -101,7 +101,7 @@ String timestampToTime(int ts) {
   int minuti = (quarti % 4) * 15;
 
   char buffer[6];
-  snprintf(buffer, sizeof(buffer), "%02d:%02d",ore, minuti);
+  snprintf(buffer, sizeof(buffer), "%02d:%02d", ore, minuti);
   return String(buffer);
 }
 
@@ -248,10 +248,22 @@ void setup() {
   tft.setRotation(0);
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
+
+  // TODO: Recuperare il seed dalla EEPROM
+  seed = 0;
+
+  // TODO: randomizzare l'offset (aggiungendo 0-365) basandosi sul Seed
+  offset = 0;
+
+    // TODO: Recuperare il TS dalla EEPROM
+    ts = 0;
+
+  // TODO: recuperare il bioma dalla EEPROM
+  Bioma bioma = Bioma::Temperato;
 }
 
 void loop() {
-  ts+= 4*24;
+  ts++;
 
   Stagione stagione = getStagione(ts, offset);
   double temp = generaTemperatura(ts, stagione, bioma, seed);
