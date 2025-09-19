@@ -1,9 +1,18 @@
-#include <TFT_eSPI.h>
+#include <CST816S.h>
+#include <Preferences.h>
+#include <Wire.h>
+#include <TFT_eSPI.h>  // Libreria TFT
 #include <SPI.h>
 
-TFT_eSPI tft = TFT_eSPI();  // Usa i pin da User_Setup.h
-
 #define M_PI 3.14159265358979323846
+#define SDA_PIN 4
+#define SCL_PIN 5
+#define INT_PIN 0
+#define RST_PIN 1
+
+TFT_eSPI tft = TFT_eSPI();
+CST816S touch(SDA_PIN, SCL_PIN, RST_PIN, INT_PIN);
+Preferences prefs;
 
 // ================= ENUM =================
 enum class Stagione { Inverno,
@@ -80,6 +89,7 @@ double noiseHash(int x, int seed) {
 double lerp(double a, double b, double t) {
   return a + t * (b - a);
 }
+
 double fade(double t) {
   return t * t * (3 - 2 * t);
 }
@@ -109,8 +119,8 @@ String timestampToDate(int ts) {
   int quartiGiorno = 96;  // 24 ore * 4
   int giorno = ts / quartiGiorno + 1;
 
-  char buffer[10];
-  snprintf(buffer, sizeof(buffer), "Day %d", giorno);
+  char buffer[15];
+  snprintf(buffer, sizeof(buffer), "Giorno %d", giorno);
   return String(buffer);
 }
 
@@ -202,45 +212,81 @@ Meteo generaMeteo(int ts, int offset, Bioma b, int seed) {
 
 // ================= DISPLAY =================
 void draw(int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) {
-  tft.fillScreen(TFT_BLACK);
+  // Definizione colori (convertiti HEX -> RGB565)
+  uint16_t COL_PRIMARY   = tft.color565(0xF0, 0x41, 0x42); // #f04142 (rosso pulsanti)
+  uint16_t COL_BG        = tft.color565(0xEA, 0xE0, 0xC3); // #eae0c3 (sfondo pergamena)
+  uint16_t COL_TEXT      = tft.color565(0x00, 0x00, 0x00); // #000000 (testo)
+  uint16_t COL_ACCENT    = tft.color565(0xEC, 0xEE, 0xF2); // #eceef2 (decorazioni)
+
   int16_t w = tft.width();
   int16_t h = tft.height();
   int16_t cx = w / 2;
   int16_t cy = h / 2;
 
-  tft.setTextDatum(MC_DATUM);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.drawCentreString(timestampToDate(ts), cx, 30, 4);
-  tft.drawCentreString(timestampToTime(ts), cx, cy - 18, 6);
+  // Sfondo color pergamena
+  tft.fillScreen(COL_BG);
 
-  int btn_w = 40;
-  int btn_h = 60;
+  // Testi principali
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(COL_TEXT, COL_BG);
+  tft.drawCentreString(timestampToDate(ts), cx, 30, 4);
+
+  tft.setTextColor(COL_PRIMARY, COL_BG);
+  tft.drawCentreString(periodoToString(periodo) + " - " + stagioneToString(stagione), cx, 55, 2);
+
+  tft.setTextColor(COL_TEXT, COL_BG);
+  tft.drawCentreString(timestampToTime(ts), cx, cy - 20, 6);
+
+  // Pulsanti
+  int btn_w = 46;
+  int btn_h = 70;
   int btn_y = cy - (btn_h / 2);
 
-  tft.fillRect(0, btn_y, btn_w, btn_h, TFT_DARKGREY);
-  tft.setTextColor(TFT_WHITE, TFT_DARKGREY);
-  tft.drawCentreString("<", btn_w / 2, cy - 6, 2);
+  tft.setTextColor(COL_BG, COL_PRIMARY);
+  
+  // Pulsante sinistro
+  tft.fillRoundRect(0, btn_y, btn_w, btn_h, 8, COL_PRIMARY);
+  tft.drawCentreString("<", btn_w / 2, cy - 10, 4);
 
-  tft.fillRect(w - btn_w, btn_y, btn_w, btn_h, TFT_DARKGREY);
-  tft.drawCentreString(">", w - btn_w / 2, cy - 6, 2);
+  // Pulsante destro
+  tft.fillRoundRect(w - btn_w, btn_y, btn_w, btn_h, 8, COL_PRIMARY);
+  tft.drawCentreString(">", w - btn_w / 2, cy - 10, 4);
 
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  int spacing = 20;
-  int startY = cy + 50;
-  tft.drawCentreString(periodoToString(periodo), cx, startY, 2);
-  tft.drawCentreString(stagioneToString(stagione), cx, startY + spacing, 2);
-  tft.drawCentreString(meteoToString(meteo), cx, startY + 2 * spacing, 2);
+  // Pulsante config
+  btn_w = 70;
+  btn_h = 36;
 
-  // Serial.print(biomaToString(bioma));
-  // Serial.print(temp);
+  tft.fillRoundRect((w - btn_w)/2, h - btn_h, btn_w, btn_h, 8, COL_PRIMARY);
+  tft.drawCentreString("Config", w/2, h - 25, 2);
+  
+  // Sezioni descrittive (periodo, stagione, meteo)
+  int spacing = 22;
+  int startY = cy + 40;
+
+  char buffer[10];
+  snprintf(buffer, sizeof(buffer), "%d", (int)temp);
+
+  tft.setTextColor(COL_TEXT, COL_BG);
+  tft.drawCentreString(String(buffer) + " " + meteoToString(meteo), cx, startY, 4);
+
+
 }
 
-// ================= SETUP / LOOP =================
 
-int ts = 0;
-int offset = 0;
-int seed = 0;
-Bioma bioma = Bioma::Temperato;
+// ================= SETUP / LOOP =================
+unsigned long lastTouchTime = 0;
+unsigned long pressStartTime = 0;
+bool isPressing = false;
+bool wasPressed = false;
+
+uint32_t seed;
+uint16_t offset;
+int ts;
+Bioma bioma;
+Stagione stagione;
+double temp;
+Meteo meteo;
+Periodo periodo;
 
 void setup() {
   Serial.begin(115200);
@@ -249,27 +295,153 @@ void setup() {
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
 
-  // TODO: Recuperare il seed dalla EEPROM
-  seed = 0;
+  touch.begin();
 
-  // TODO: randomizzare l'offset (aggiungendo 0-365) basandosi sul Seed
-  offset = 0;
+  prefs.begin("meteo", false);
 
-    // TODO: Recuperare il TS dalla EEPROM
-    ts = 0;
+  // Recupero il seed, se non esiste lo genero
+  seed = prefs.getUInt("seed", 0);
+  if (seed == 0) {
+    prefs.putUInt("seed", 1);
+  } else {
+    Serial.printf("Seed caricato: %lu\n", seed);
+  }
 
-  // TODO: recuperare il bioma dalla EEPROM
-  Bioma bioma = Bioma::Temperato;
-}
+  // Offset dipende dal seed
+  offset = getOffsetFromSeed(seed);
+  Serial.printf("Offset calcolato: %u\n", offset);
 
-void loop() {
-  ts++;
+  // Recupero il timestamp (default 0)
+  ts = prefs.getUInt("ts", 0);
+  Serial.printf("Timestamp: %lu\n", ts);
 
-  Stagione stagione = getStagione(ts, offset);
-  double temp = generaTemperatura(ts, stagione, bioma, seed);
-  Meteo meteo = generaMeteo(ts, offset, bioma, seed);
-  Periodo periodo = getPeriodo(ts);
+  // Recupero il bioma (default Temperato)
+  uint8_t biomaVal = prefs.getUChar("bioma", (uint8_t)Bioma::Temperato);
+  bioma = (Bioma)biomaVal;
+  Serial.printf("Bioma: %u\n", bioma);
+
+  // Disegno la prima schermata 
+  stagione = getStagione(ts, offset);
+  temp = generaTemperatura(ts, stagione, bioma, seed);
+  meteo = generaMeteo(ts, offset, bioma, seed);
+  periodo = getPeriodo(ts);
 
   draw(ts, stagione, temp, meteo, periodo);
-  delay(100);
+
+  prefs.end();
+}
+
+uint16_t getOffsetFromSeed(uint32_t seed) {
+    // Hashing semplice basato su LCG
+    uint32_t x = seed;
+    x ^= x >> 16;
+    x *= 0x45d9f3b;   // costante scelta per diffusione dei bit
+    x ^= x >> 16;
+    x *= 0x45d9f3b;
+    x ^= x >> 16;
+
+    return x % 366;  // rimappiamo tra 0 e 365
+}
+
+// --- Loop principale ---
+void loop() {
+  stagione = getStagione(ts, offset);
+  temp = generaTemperatura(ts, stagione, bioma, seed);
+  meteo = generaMeteo(ts, offset, bioma, seed);
+  periodo = getPeriodo(ts);
+
+  if (touch.available()) {
+    int16_t w = tft.width();
+    int16_t h = tft.height();
+    int16_t cx = w / 2;
+    int16_t cy = h / 2;
+    int btn_w = 40;
+    int btn_h = 60;
+    int btn_y = cy - (btn_h / 2);
+    int x = touch.data.x;
+    int y = touch.data.y;
+
+    bool leftPressed  = (x >= 0 && x <= btn_w && y >= btn_y && y <= btn_y + btn_h);
+    bool rightPressed = (x >= w - btn_w && x <= w && y >= btn_y && y <= btn_y + btn_h);
+
+    if (leftPressed || rightPressed) {
+      handleTouch(leftPressed ? -1 : +1);  // -1 per sinistra, +1 per destra
+    } else {
+      resetTouchState();
+    }
+  } else {
+    resetTouchState();
+  }
+
+  delay(20); // loop veloce per gestire bene i tempi
+}
+
+// --- Gestione del tocco con autorepeat ---
+void handleTouch(int dir) {
+  unsigned long now = millis();
+
+  if (!isPressing) {
+    // Primo tocco
+    isPressing = true;
+    wasPressed = true;
+    pressStartTime = now;
+    lastTouchTime = now;
+    changeTime(dir, 1);  // variazione iniziale di 1
+    return;
+  }
+
+  // Quanto tempo è passato da quando tengo premuto
+  unsigned long pressDuration = now - pressStartTime;
+
+  // Intervallo di ripetizione dinamico
+  unsigned long interval = 400; // default: 1s
+
+  if (pressDuration > 1000 && pressDuration <= 2000) interval = 300;
+  else if (pressDuration > 2000 && pressDuration <= 3000) interval = 200;
+  else if (pressDuration > 3000 && pressDuration <= 4000) interval = 100;
+  else if (pressDuration > 4000 && pressDuration <= 6000) interval = 10;
+  else if (pressDuration > 6000) {
+    // dopo 6s → vai sempre al giorno successivo o precedente alle 08:00
+    if (now - lastTouchTime >= 500) { // ogni mezzo secondo
+      int day = (ts - 1) / 96;            // calcola il giorno corrente
+      int targetTs;
+
+      if (dir == 1) {
+        targetTs = (day + 1) * 96 + 32;   // giorno successivo alle 08:00
+      } else {
+        targetTs = (day - 1) * 96 + 32;   // giorno precedente alle 08:00
+      }
+
+      int offset = abs(targetTs - ts);     // offset sempre positivo
+
+      changeTime(dir, offset);
+      lastTouchTime = now;
+    }
+    return;
+  }
+
+
+  // gestione ripetizione "normale"
+  if (now - lastTouchTime >= interval) {
+    changeTime(dir, 1);
+    lastTouchTime = now;
+  }
+}
+
+// --- Reset quando rilascio ---
+void resetTouchState() {
+  isPressing = false;
+  wasPressed = false;
+}
+
+// --- Modifica ts con i limiti ---
+void changeTime(int dir, int step) {
+  ts += dir * step;
+  if (ts < 0) ts = 0; // limite inferiore
+
+  prefs.begin("meteo", false);   // namespace "meteo", modalità read/write
+  prefs.putUInt("ts", ts);       // salvo il timestamp
+  prefs.end();                   // chiudo per liberare risorse
+
+  draw(ts, stagione, temp, meteo, periodo);
 }

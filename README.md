@@ -22,3 +22,4 @@ per il problema di loop bisogna usare la versione 2.0.14 delle board ESP32
 
 #define TFT_BL    3   // BACKLIGHT
 
+libreria touch: https://github.com/fbiego/CST816S
