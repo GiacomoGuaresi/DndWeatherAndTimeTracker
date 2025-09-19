@@ -15,66 +15,66 @@ CST816S touch(SDA_PIN, SCL_PIN, RST_PIN, INT_PIN);
 Preferences prefs;
 
 // ================= ENUM =================
-enum class Stagione { Inverno,
-                      Primavera,
-                      Estate,
-                      Autunno };
-enum class Periodo { Notte,
-                     Mattina,
-                     Giorno,
-                     Sera };
-enum class Bioma { Caldo,
-                   Temperato,
-                   Freddo };
-enum class Meteo { Soleggiato,
-                   Nuvoloso,
-                   Pioggia,
-                   Neve,
-                   Tempesta,
-                   SoleTorrido,
-                   Gelo,
-                   TempestaDiSabbia };
+enum class Stagione { Winter,
+                      Spring,
+                      Summer,
+                      Autumn};
+enum class Periodo { Night,
+                     Moring,
+                     Day,
+                     Evening };
+enum class Bioma { Hot,
+                   Temperate,
+                   Cold };
+enum class Meteo { Sun,
+                   Cloud,
+                   Rain,
+                   Snow,
+                   Storm,
+                   ScorchingSun,
+                   Frost,
+                   Sandstorm };
 
 // ================= FUNZIONI TO STRING =================
 String stagioneToString(Stagione s) {
   switch (s) {
-    case Stagione::Inverno: return "Inverno";
-    case Stagione::Primavera: return "Primavera";
-    case Stagione::Estate: return "Estate";
-    case Stagione::Autunno: return "Autunno";
+    case Stagione::Winter: return "Winter";
+    case Stagione::Spring: return "Spring";
+    case Stagione::Summer: return "Summer";
+    case Stagione::Autumn: return "Autumn";
   }
   return "?";
 }
 
 String periodoToString(Periodo p) {
   switch (p) {
-    case Periodo::Notte: return "Notte";
-    case Periodo::Mattina: return "Mattina";
-    case Periodo::Giorno: return "Giorno";
-    case Periodo::Sera: return "Sera";
+    case Periodo::Night: return "Night";
+    case Periodo::Moring: return "Moring";
+    case Periodo::Day: return "Day";
+    case Periodo::Evening: return "Evening";
   }
   return "?";
 }
 
 String biomaToString(Bioma b) {
   switch (b) {
-    case Bioma::Caldo: return "Caldo";
-    case Bioma::Temperato: return "Temperato";
-    case Bioma::Freddo: return "Freddo";
+    case Bioma::Hot: return "Hot";
+    case Bioma::Temperate: return "Temperate";
+    case Bioma::Cold: return "Cold";
   }
   return "?";
 }
 
 String meteoToString(Meteo m) {
   switch (m) {
-    case Meteo::Soleggiato: return "Soleggiato";
-    case Meteo::Nuvoloso: return "Nuvoloso";
-    case Meteo::Pioggia: return "Pioggia";
-    case Meteo::Neve: return "Neve";
-    case Meteo::Tempesta: return "Tempesta";
-    case Meteo::SoleTorrido: return "Sole torrido";
-    case Meteo::Gelo: return "Gelo";
-    case Meteo::TempestaDiSabbia: return "Tempesta di sabbia";
+    case Meteo::Sun: return "Sun";
+    case Meteo::Cloud: return "Cloud";
+    case Meteo::Rain: return "Rain";
+    case Meteo::Snow: return "Snow";
+    case Meteo::Storm: return "Storm";
+    case Meteo::ScorchingSun: return "Scorching sun";
+    case Meteo::Frost: return "Frost";
+    case Meteo::Sandstorm: return "Sandstorm";
   }
   return "?";
 }
@@ -105,8 +105,8 @@ double perlin1D(double x, int seed) {
 
 // ================= GESTIONE TEMPO E STAGIONI =================
 String timestampToTime(int ts) {
-  int quartiGiorno = 96;  // 24 ore * 4
-  int quarti = ts % quartiGiorno;
+  int quartiDay = 96;  // 24 ore * 4
+  int quarti = ts % quartiDay;
   int ore = quarti / 4;
   int minuti = (quarti % 4) * 15;
 
@@ -116,11 +116,11 @@ String timestampToTime(int ts) {
 }
 
 String timestampToDate(int ts) {
-  int quartiGiorno = 96;  // 24 ore * 4
-  int giorno = ts / quartiGiorno + 1;
+  int quartiDay = 96;  // 24 ore * 4
+  int Day = ts / quartiDay + 1;
 
   char buffer[15];
-  snprintf(buffer, sizeof(buffer), "Giorno %d", giorno);
+  snprintf(buffer, sizeof(buffer), "Day %d", Day);
   return String(buffer);
 }
 
@@ -130,33 +130,33 @@ Periodo getPeriodo(int ts) {
   int minuti = (quarti % 4) * 15;
   int totaleMinuti = ore * 60 + minuti;
 
-  if (totaleMinuti >= 6 * 60 && totaleMinuti < 12 * 60) return Periodo::Mattina;
-  if (totaleMinuti >= 12 * 60 && totaleMinuti < 18 * 60) return Periodo::Giorno;
-  if (totaleMinuti >= 18 * 60 && totaleMinuti < 22 * 60) return Periodo::Sera;
-  return Periodo::Notte;
+  if (totaleMinuti >= 6 * 60 && totaleMinuti < 12 * 60) return Periodo::Moring;
+  if (totaleMinuti >= 12 * 60 && totaleMinuti < 18 * 60) return Periodo::Day;
+  if (totaleMinuti >= 18 * 60 && totaleMinuti < 22 * 60) return Periodo::Evening;
+  return Periodo::Night;
 }
 
 Stagione getStagione(int ts, int offset) {
-  int giorno = ts / 96 + 1;
-  int giornoAnno = (giorno + offset) % 366;
+  int Day = ts / 96 + 1;
+  int DayAnno = (Day + offset) % 366;
 
-  if (giornoAnno >= 80 && giornoAnno < 172) return Stagione::Primavera;
-  if (giornoAnno >= 172 && giornoAnno < 266) return Stagione::Estate;
-  if (giornoAnno >= 266 && giornoAnno <= 365) return Stagione::Autunno;
-  return Stagione::Inverno;
+  if (DayAnno >= 80 && DayAnno < 172) return Stagione::Spring;
+  if (DayAnno >= 172 && DayAnno < 266) return Stagione::Summer;
+  if (DayAnno >= 266 && DayAnno <= 365) return Stagione::Autumn;
+  return Stagione::Winter;
 }
 
 double baseTemp(Stagione s, Bioma b) {
   double t = 0;
   switch (s) {
-    case Stagione::Inverno: t = 0; break;
-    case Stagione::Primavera: t = 10; break;
-    case Stagione::Estate: t = 20; break;
-    case Stagione::Autunno: t = 10; break;
+    case Stagione::Winter: t = 0; break;
+    case Stagione::Spring: t = 10; break;
+    case Stagione::Summer: t = 20; break;
+    case Stagione::Autumn: t = 10; break;
   }
   switch (b) {
-    case Bioma::Caldo: t += 10; break;
-    case Bioma::Freddo: t -= 10; break;
+    case Bioma::Hot: t += 10; break;
+    case Bioma::Cold: t -= 10; break;
     default: break;
   }
   return t;
@@ -177,34 +177,34 @@ Meteo generaMeteo(int ts, int offset, Bioma b, int seed) {
   Stagione s = getStagione(ts, offset);
   double temp = generaTemperatura(ts, s, b, seed);
   double variabile = perlin1D(ts * 0.05, seed + 123);
-  Meteo meteo = Meteo::Soleggiato;
+  Meteo meteo = Meteo::Sun;
 
-  if (s == Stagione::Inverno) {
+  if (s == Stagione::Winter) {
     if (temp <= 0) {
-      if (variabile > 0.5) meteo = Meteo::Neve;
-      else if (variabile > 0.0) meteo = Meteo::Nuvoloso;
+      if (variabile > 0.5) meteo = Meteo::Snow;
+      else if (variabile > 0.0) meteo = Meteo::Cloud;
     } else {
-      if (variabile > 0.5) meteo = Meteo::Pioggia;
-      else if (variabile > 0.0) meteo = Meteo::Nuvoloso;
+      if (variabile > 0.5) meteo = Meteo::Rain;
+      else if (variabile > 0.0) meteo = Meteo::Cloud;
     }
-  } else if (s == Stagione::Estate) {
-    if (variabile > 0.6) meteo = Meteo::Tempesta;
-    else if (variabile > 0.3) meteo = Meteo::Nuvoloso;
+  } else if (s == Stagione::Summer) {
+    if (variabile > 0.6) meteo = Meteo::Storm;
+    else if (variabile > 0.3) meteo = Meteo::Cloud;
   } else {
-    if (variabile > 0.6) meteo = Meteo::Pioggia;
-    else if (variabile > 0.2) meteo = Meteo::Nuvoloso;
+    if (variabile > 0.6) meteo = Meteo::Rain;
+    else if (variabile > 0.2) meteo = Meteo::Cloud;
   }
 
-  if (temp > 35) meteo = Meteo::SoleTorrido;
-  if (temp < -10) meteo = Meteo::Gelo;
+  if (temp > 35) meteo = Meteo::ScorchingSun;
+  if (temp < -10) meteo = Meteo::Frost;
 
-  if (b == Bioma::Caldo) {
-    if (meteo == Meteo::Tempesta) meteo = Meteo::TempestaDiSabbia;
-    if (meteo == Meteo::Pioggia) meteo = Meteo::Soleggiato;
-    if (meteo == Meteo::Neve) meteo = Meteo::Soleggiato;
+  if (b == Bioma::Hot) {
+    if (meteo == Meteo::Storm) meteo = Meteo::Sandstorm;
+    if (meteo == Meteo::Rain) meteo = Meteo::Sun;
+    if (meteo == Meteo::Snow) meteo = Meteo::Sun;
   }
-  if (b == Bioma::Freddo) {
-    if (meteo == Meteo::SoleTorrido) meteo = Meteo::Soleggiato;
+  if (b == Bioma::Cold) {
+    if (meteo == Meteo::ScorchingSun) meteo = Meteo::Sun;
   }
 
   return meteo;
@@ -317,8 +317,8 @@ void setup() {
   ts = prefs.getUInt("ts", 0);
   Serial.printf("Timestamp: %lu\n", ts);
 
-  // Recupero il bioma (default Temperato)
-  uint8_t biomaVal = prefs.getUChar("bioma", (uint8_t)Bioma::Temperato);
+  // Recupero il bioma (default Temperate)
+  uint8_t biomaVal = prefs.getUChar("bioma", (uint8_t)Bioma::Temperate);
   bioma = (Bioma)biomaVal;
   Serial.printf("Bioma: %u\n", bioma);
 
@@ -409,15 +409,15 @@ void handleTouch(int dir) {
   else if (pressDuration > 3000 && pressDuration <= 4000) interval = 100;
   else if (pressDuration > 4000 && pressDuration <= 6000) interval = 10;
   else if (pressDuration > 6000) {
-    // dopo 6s → vai sempre al giorno successivo o precedente alle 08:00
+    // dopo 6s → vai sempre al Day successivo o precedente alle 08:00
     if (now - lastTouchTime >= 500) {  // ogni mezzo secondo
-      int day = (ts - 1) / 96;         // calcola il giorno corrente
+      int day = (ts - 1) / 96;         // calcola il Day corrente
       int targetTs;
 
       if (dir == 1) {
-        targetTs = (day + 1) * 96 + 32;  // giorno successivo alle 08:00
+        targetTs = (day + 1) * 96 + 32;  // Day successivo alle 08:00
       } else {
-        targetTs = (day - 1) * 96 + 32;  // giorno precedente alle 08:00
+        targetTs = (day - 1) * 96 + 32;  // Day precedente alle 08:00
       }
 
       int offset = abs(targetTs - ts);  // offset sempre positivo
