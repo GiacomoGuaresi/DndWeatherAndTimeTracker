@@ -211,12 +211,12 @@ Meteo generaMeteo(int ts, int offset, Bioma b, int seed) {
 }
 
 // ================= DISPLAY =================
-void draw(int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) {
+void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) {
   // Definizione colori (convertiti HEX -> RGB565)
-  uint16_t COL_PRIMARY   = tft.color565(0xF0, 0x41, 0x42); // #f04142 (rosso pulsanti)
-  uint16_t COL_BG        = tft.color565(0xEA, 0xE0, 0xC3); // #eae0c3 (sfondo pergamena)
-  uint16_t COL_TEXT      = tft.color565(0x00, 0x00, 0x00); // #000000 (testo)
-  uint16_t COL_ACCENT    = tft.color565(0xEC, 0xEE, 0xF2); // #eceef2 (decorazioni)
+  uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
+  uint16_t COL_BG = tft.color565(0xEA, 0xE0, 0xC3);       // #eae0c3 (sfondo pergamena)
+  uint16_t COL_TEXT = tft.color565(0x00, 0x00, 0x00);     // #000000 (testo)
+  uint16_t COL_ACCENT = tft.color565(0xEC, 0xEE, 0xF2);   // #eceef2 (decorazioni)
 
   int16_t w = tft.width();
   int16_t h = tft.height();
@@ -224,7 +224,12 @@ void draw(int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) 
   int16_t cy = h / 2;
 
   // Sfondo color pergamena
-  tft.fillScreen(COL_BG);
+  if (fullRedraw)
+    tft.fillScreen(COL_BG);
+  else {
+    tft.fillRect(0, 0, w, 80, COL_BG);
+    tft.fillRect(0, cy + 38, w, 24, COL_BG);
+  }
 
   // Testi principali
   tft.setTextDatum(MC_DATUM);
@@ -238,38 +243,35 @@ void draw(int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) 
   tft.drawCentreString(timestampToTime(ts), cx, cy - 20, 6);
 
   // Pulsanti
-  int btn_w = 46;
-  int btn_h = 70;
-  int btn_y = cy - (btn_h / 2);
+  if (fullRedraw) {
+    int btn_w = 46;
+    int btn_h = 70;
+    int btn_y = cy - (btn_h / 2);
 
-  tft.setTextColor(COL_BG, COL_PRIMARY);
-  
-  // Pulsante sinistro
-  tft.fillRoundRect(0, btn_y, btn_w, btn_h, 8, COL_PRIMARY);
-  tft.drawCentreString("<", btn_w / 2, cy - 10, 4);
+    tft.setTextColor(COL_BG, COL_PRIMARY);
 
-  // Pulsante destro
-  tft.fillRoundRect(w - btn_w, btn_y, btn_w, btn_h, 8, COL_PRIMARY);
-  tft.drawCentreString(">", w - btn_w / 2, cy - 10, 4);
+    // Pulsante sinistro
+    tft.fillRoundRect(0, btn_y, btn_w, btn_h, 8, COL_PRIMARY);
+    tft.drawCentreString("<", btn_w / 2, cy - 10, 4);
 
-  // Pulsante config
-  btn_w = 70;
-  btn_h = 36;
+    // Pulsante destro
+    tft.fillRoundRect(w - btn_w, btn_y, btn_w, btn_h, 8, COL_PRIMARY);
+    tft.drawCentreString(">", w - btn_w / 2, cy - 10, 4);
 
-  tft.fillRoundRect((w - btn_w)/2, h - btn_h, btn_w, btn_h, 8, COL_PRIMARY);
-  tft.drawCentreString("Config", w/2, h - 25, 2);
-  
+    // Pulsante config
+    btn_w = 70;
+    btn_h = 36;
+
+    tft.fillRoundRect((w - btn_w) / 2, h - btn_h, btn_w, btn_h, 8, COL_PRIMARY);
+    tft.drawCentreString("Config", w / 2, h - 25, 2);
+  }
+
+
   // Sezioni descrittive (periodo, stagione, meteo)
-  int spacing = 22;
-  int startY = cy + 40;
-
   char buffer[10];
   snprintf(buffer, sizeof(buffer), "%d", (int)temp);
-
   tft.setTextColor(COL_TEXT, COL_BG);
-  tft.drawCentreString(String(buffer) + " " + meteoToString(meteo), cx, startY, 4);
-
-
+  tft.drawCentreString(String(buffer) + "c " + meteoToString(meteo), cx, cy + 40, 4);
 }
 
 
@@ -291,7 +293,7 @@ Periodo periodo;
 void setup() {
   Serial.begin(115200);
   tft.init();
-  tft.setRotation(0);
+  tft.setRotation(1);
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
 
@@ -320,27 +322,27 @@ void setup() {
   bioma = (Bioma)biomaVal;
   Serial.printf("Bioma: %u\n", bioma);
 
-  // Disegno la prima schermata 
+  // Disegno la prima schermata
   stagione = getStagione(ts, offset);
   temp = generaTemperatura(ts, stagione, bioma, seed);
   meteo = generaMeteo(ts, offset, bioma, seed);
   periodo = getPeriodo(ts);
 
-  draw(ts, stagione, temp, meteo, periodo);
+  draw(true, ts, stagione, temp, meteo, periodo);
 
   prefs.end();
 }
 
 uint16_t getOffsetFromSeed(uint32_t seed) {
-    // Hashing semplice basato su LCG
-    uint32_t x = seed;
-    x ^= x >> 16;
-    x *= 0x45d9f3b;   // costante scelta per diffusione dei bit
-    x ^= x >> 16;
-    x *= 0x45d9f3b;
-    x ^= x >> 16;
+  // Hashing semplice basato su LCG
+  uint32_t x = seed;
+  x ^= x >> 16;
+  x *= 0x45d9f3b;  // costante scelta per diffusione dei bit
+  x ^= x >> 16;
+  x *= 0x45d9f3b;
+  x ^= x >> 16;
 
-    return x % 366;  // rimappiamo tra 0 e 365
+  return x % 366;  // rimappiamo tra 0 e 365
 }
 
 // --- Loop principale ---
@@ -358,11 +360,16 @@ void loop() {
     int btn_w = 40;
     int btn_h = 60;
     int btn_y = cy - (btn_h / 2);
+
     int x = touch.data.x;
     int y = touch.data.y;
 
-    bool leftPressed  = (x >= 0 && x <= btn_w && y >= btn_y && y <= btn_y + btn_h);
-    bool rightPressed = (x >= w - btn_w && x <= w && y >= btn_y && y <= btn_y + btn_h);
+    // --- Mappatura per rotazione 90° ---
+    int tx = y;      // X sullo schermo = Y del touch
+    int ty = w - x;  // Y sullo schermo = larghezza - X del touch
+
+    bool leftPressed = (tx >= 0 && tx <= btn_w && ty >= btn_y && ty <= btn_y + btn_h);
+    bool rightPressed = (tx >= w - btn_w && tx <= w && ty >= btn_y && ty <= btn_y + btn_h);
 
     if (leftPressed || rightPressed) {
       handleTouch(leftPressed ? -1 : +1);  // -1 per sinistra, +1 per destra
@@ -373,7 +380,8 @@ void loop() {
     resetTouchState();
   }
 
-  delay(20); // loop veloce per gestire bene i tempi
+
+  delay(20);  // loop veloce per gestire bene i tempi
 }
 
 // --- Gestione del tocco con autorepeat ---
@@ -394,7 +402,7 @@ void handleTouch(int dir) {
   unsigned long pressDuration = now - pressStartTime;
 
   // Intervallo di ripetizione dinamico
-  unsigned long interval = 400; // default: 1s
+  unsigned long interval = 400;  // default: 1s
 
   if (pressDuration > 1000 && pressDuration <= 2000) interval = 300;
   else if (pressDuration > 2000 && pressDuration <= 3000) interval = 200;
@@ -402,17 +410,17 @@ void handleTouch(int dir) {
   else if (pressDuration > 4000 && pressDuration <= 6000) interval = 10;
   else if (pressDuration > 6000) {
     // dopo 6s → vai sempre al giorno successivo o precedente alle 08:00
-    if (now - lastTouchTime >= 500) { // ogni mezzo secondo
-      int day = (ts - 1) / 96;            // calcola il giorno corrente
+    if (now - lastTouchTime >= 500) {  // ogni mezzo secondo
+      int day = (ts - 1) / 96;         // calcola il giorno corrente
       int targetTs;
 
       if (dir == 1) {
-        targetTs = (day + 1) * 96 + 32;   // giorno successivo alle 08:00
+        targetTs = (day + 1) * 96 + 32;  // giorno successivo alle 08:00
       } else {
-        targetTs = (day - 1) * 96 + 32;   // giorno precedente alle 08:00
+        targetTs = (day - 1) * 96 + 32;  // giorno precedente alle 08:00
       }
 
-      int offset = abs(targetTs - ts);     // offset sempre positivo
+      int offset = abs(targetTs - ts);  // offset sempre positivo
 
       changeTime(dir, offset);
       lastTouchTime = now;
@@ -437,11 +445,11 @@ void resetTouchState() {
 // --- Modifica ts con i limiti ---
 void changeTime(int dir, int step) {
   ts += dir * step;
-  if (ts < 0) ts = 0; // limite inferiore
+  if (ts < 0) ts = 0;  // limite inferiore
 
-  prefs.begin("meteo", false);   // namespace "meteo", modalità read/write
-  prefs.putUInt("ts", ts);       // salvo il timestamp
-  prefs.end();                   // chiudo per liberare risorse
+  prefs.begin("meteo", false);  // namespace "meteo", modalità read/write
+  prefs.putUInt("ts", ts);      // salvo il timestamp
+  prefs.end();                  // chiudo per liberare risorse
 
-  draw(ts, stagione, temp, meteo, periodo);
+  draw(false, ts, stagione, temp, meteo, periodo);
 }
