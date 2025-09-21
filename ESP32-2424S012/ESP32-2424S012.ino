@@ -103,6 +103,32 @@ double perlin1D(double x, int seed) {
   return lerp(v1, v2, u);
 }
 
+double noiseHash2D(int x, int y, int seed) {
+  unsigned int n = (x * 1619 + y * 31337 + seed * 1013) & 0x7fffffff;
+  n = (n >> 13) ^ n;
+  return 1.0 - ((n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff) / 1073741824.0;
+}
+
+double perlin2D(double x, double y, int seed) {
+  int xi = (int)floor(x);
+  int yi = (int)floor(y);
+
+  double xf = x - xi;
+  double yf = y - yi;
+
+  double v00 = noiseHash2D(xi, yi, seed);
+  double v10 = noiseHash2D(xi + 1, yi, seed);
+  double v01 = noiseHash2D(xi, yi + 1, seed);
+  double v11 = noiseHash2D(xi + 1, yi + 1, seed);
+
+  double u = fade(xf);
+  double v = fade(yf);
+
+  double x1 = lerp(v00, v10, u);
+  double x2 = lerp(v01, v11, u);
+  return lerp(x1, x2, v);
+}
+
 // ================= GESTIONE TEMPO E STAGIONI =================
 String timestampToTime(int ts) {
   int quartiDay = 96;  // 24 ore * 4
@@ -211,6 +237,28 @@ Meteo generaMeteo(int ts, int offset, Bioma b, int seed) {
 }
 
 // ================= DISPLAY =================
+
+void drawBackgroundNoiseRect(int x0, int y0, int w, int h, uint16_t baseColor, int seed = 1234) {
+  // decomponi il colore base
+  uint8_t r = (baseColor >> 11) & 0x1F;
+  uint8_t g = (baseColor >> 5) & 0x3F;
+  uint8_t b = baseColor & 0x1F;
+
+  // scala per rumore
+  double scale = 0.1; // più basso = rumore più grande e liscio
+  double intensity = 3; // quanto schiarire/scurire
+
+  for (int y = y0; y < y0 + h; y++) {
+    for (int x = x0; x < x0 + w; x++) {
+      double n = perlin2D(x * scale, y * scale, seed); // -1..1
+      int nr = constrain(r + (int)(n * intensity), 0, 31);
+      int ng = constrain(g + (int)(n * intensity), 0, 63);
+      int nb = constrain(b + (int)(n * intensity), 0, 31);
+      tft.drawPixel(x, y, tft.color565(nr << 3, ng << 2, nb << 3)); // riconverti RGB565
+    }
+  }
+}
+
 void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) {
   // Definizione colori (convertiti HEX -> RGB565)
   uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
@@ -225,21 +273,27 @@ void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, 
 
   // Sfondo color pergamena
   if (fullRedraw)
-    tft.fillScreen(COL_BG);
-  else {
-    tft.fillRect(0, 0, w, 80, COL_BG);
-    tft.fillRect(0, cy + 38, w, 24, COL_BG);
-  }
+    drawBackgroundNoiseRect(0, 0, w, h, COL_BG);
+  
+  
+  tft.fillRoundRect(40, 0, w - 80, 80, 8, COL_ACCENT);
+  tft.drawRoundRect(40, 0, w - 80, 80, 8, COL_PRIMARY);
+
+  tft.fillRoundRect(30, cy + 38, w - 60, 28, 8, COL_ACCENT);
+  tft.drawRoundRect(30, cy + 38, w - 60, 28, 8, COL_PRIMARY);
+  
+  tft.fillRoundRect(50, (h/2) - 35, w - 100, 70, 8, COL_ACCENT);
+  tft.drawRoundRect(50, (h/2) - 35, w - 100, 70, 8, COL_PRIMARY);
 
   // Testi principali
   tft.setTextDatum(MC_DATUM);
-  tft.setTextColor(COL_TEXT, COL_BG);
+  tft.setTextColor(COL_TEXT);
   tft.drawCentreString(timestampToDate(ts), cx, 30, 4);
 
-  tft.setTextColor(COL_PRIMARY, COL_BG);
+  tft.setTextColor(COL_PRIMARY);
   tft.drawCentreString(periodoToString(periodo) + " - " + stagioneToString(stagione), cx, 55, 2);
 
-  tft.setTextColor(COL_TEXT, COL_BG);
+  tft.setTextColor(COL_TEXT);
   tft.drawCentreString(timestampToTime(ts), cx, cy - 20, 6);
 
   // Pulsanti
@@ -270,7 +324,7 @@ void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, 
   // Sezioni descrittive (periodo, stagione, meteo)
   char buffer[10];
   snprintf(buffer, sizeof(buffer), "%d", (int)temp);
-  tft.setTextColor(COL_TEXT, COL_BG);
+  tft.setTextColor(COL_TEXT);
   tft.drawCentreString(String(buffer) + "c " + meteoToString(meteo), cx, cy + 40, 4);
 }
 
