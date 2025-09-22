@@ -31,6 +31,11 @@ enum class Meteo
     Sandstorm
 };
 
+enum class Screen{
+    MainScreen,
+    ConfigScreen,
+};
+
 String stagioneToString(Stagione s)
 {
     switch (s)
