@@ -280,6 +280,7 @@ void drawConfigScreen(bool fullRedraw) {
   // Disegna/scrivi titolo
   tft.setTextColor(COL_TEXT);
   tft.drawCentreString("Config", cx, 10, 4);
+  tft.drawCentreString("Version 0.0.1", cx, 35, 2);
 
   // Testo bioma
   tft.setTextColor(COL_TEXT, COL_BG);
