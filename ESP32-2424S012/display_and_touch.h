@@ -214,81 +214,77 @@ void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, 
 }
 
 void drawConfigScreen(bool fullRedraw) {
-  // Definizione colori (convertiti HEX -> RGB565)
-  uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
-  uint16_t COL_BG = tft.color565(0xEA, 0xE0, 0xC3);       // #eae0c3 (sfondo pergamena)
-  uint16_t COL_TEXT = tft.color565(0x00, 0x00, 0x00);     // #000000 (testo)
-  uint16_t COL_ACCENT = tft.color565(0xEA, 0xAF, 0x7C);   // #EAAF7C (decorazioni)
+  // Colori
+  uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);
+  uint16_t COL_BG = tft.color565(0xEA, 0xE0, 0xC3);
+  uint16_t COL_TEXT = tft.color565(0x00, 0x00, 0x00);
+  uint16_t COL_ACCENT = tft.color565(0xEA, 0xAF, 0x7C);
 
   int16_t w = tft.width();
   int16_t h = tft.height();
   int16_t cx = w / 2;
   int16_t cy = h / 2;
 
-  int bioma_y = cy - 40;
-  int seed_y = cy + (40 - 36);
+  // Spaziatura verticale uniforme
+  int itemSpacing = 40;
+  int first_y = cy - itemSpacing;  // Bioma in alto
+  int bioma_y = first_y;
+  int seed_y = first_y + itemSpacing;
+  int bright_y = seed_y + itemSpacing;  // nuova riga brightness
 
   if (fullRedraw) {
     tft.fillScreen(COL_BG);
-    int btn_w = 36;
-    int btn_h = 90;
-    int btn_y = cy - (btn_h / 2);
-
-    tft.setTextColor(COL_BG, COL_PRIMARY);
 
     tft.fillSmoothCircle(cx, cy, 110, COL_ACCENT, COL_BG);
     tft.fillSmoothCircle(cx, cy, 105, COL_BG, COL_ACCENT);
 
-    // Pulsante config
-    btn_w = 90;
-    btn_h = 36;
+    // Pulsante close
+    int btn_w = 90;
+    int btn_h = 36;
     tft.fillRect((w - btn_w - 10) / 2, h - btn_h, btn_w + 10, btn_h, COL_BG);
     tft.fillRoundRect((w - btn_w) / 2, h - btn_h, btn_w, btn_h, 8, COL_PRIMARY);
+    tft.setTextColor(COL_BG);
     tft.drawCentreString("Close", w / 2, h - 25, 2);
 
+    // Pulsanti bioma < >
     btn_w = 36;
     btn_h = 36;
-
-    // Pulsante sinistra
-    tft.fillRect(0 - 5, bioma_y - 5, btn_w + 10, btn_h + 10, COL_BG);
     tft.fillRoundRect(0, bioma_y, btn_w, btn_h, 8, COL_PRIMARY);
     tft.setTextColor(COL_BG);
     tft.drawCentreString("<", btn_w / 2, bioma_y + 6, 4);
-
-    // Pulsante destra
-    tft.fillRect(w - btn_w - 5, bioma_y - 5, btn_w + 10, btn_h + 10, COL_BG);
     tft.fillRoundRect(w - btn_w, bioma_y, btn_w, btn_h, 8, COL_PRIMARY);
-    tft.setTextColor(COL_BG);
     tft.drawCentreString(">", w - (btn_w / 2), bioma_y + 6, 4);
 
-    // Pulsante sinistra
-    tft.fillRect(0 - 5, seed_y - 5, btn_w + 10, btn_h + 10, COL_BG);
+    // Pulsanti seed - +
     tft.fillRoundRect(0, seed_y, btn_w, btn_h, 8, COL_PRIMARY);
-    tft.setTextColor(COL_BG);
     tft.drawCentreString("-", btn_w / 2, seed_y + 6, 4);
-
-    // Pulsante destra
-    tft.fillRect(w - btn_w - 5, seed_y - 5, btn_w + 10, btn_h + 10, COL_BG);
     tft.fillRoundRect(w - btn_w, seed_y, btn_w, btn_h, 8, COL_PRIMARY);
-    tft.setTextColor(COL_BG);
     tft.drawCentreString("+", w - (btn_w / 2), seed_y + 6, 4);
+
+    // Pulsanti brightness - +
+    tft.fillRoundRect(0, bright_y, btn_w, btn_h, 8, COL_PRIMARY);
+    tft.drawCentreString("-", btn_w / 2, bright_y + 6, 4);
+    tft.fillRoundRect(w - btn_w, bright_y, btn_w, btn_h, 8, COL_PRIMARY);
+    tft.drawCentreString("+", w - (btn_w / 2), bright_y + 6, 4);
   }
 
   // Clear info area
   tft.fillRect((w - 130) / 2, 0, 130, h - 40, COL_BG);
 
-  // Disegna/scrivi titolo
+  // Titolo
   tft.setTextColor(COL_TEXT);
   tft.drawCentreString("Config", cx, 10, 4);
   tft.drawCentreString("Version 0.0.1", cx, 35, 2);
 
-  // Testo bioma
+  // Bioma
   tft.setTextColor(COL_TEXT, COL_BG);
   tft.drawCentreString(biomaToString(bioma), cx, bioma_y + 7, 4);
 
-  // Testo seed
-  tft.setTextColor(COL_TEXT, COL_BG);
+  // Seed
   tft.drawCentreString("Campaign number " + String(seed), cx, seed_y + 7, 2);
+
+  // Brightness (10-100)
+  tft.drawCentreString("Brightness " + String(brightness) + "%", cx, bright_y + 7, 2);
 }
 
 void changeTime(int dir, int step) {
@@ -328,7 +324,7 @@ void changeBiome(int step) {
   bioma = static_cast<Bioma>(biomaVal);
 
   // Salvo nelle preferences
-  prefs.begin("meteo", false);  
+  prefs.begin("meteo", false);
   prefs.putUChar("bioma", static_cast<uint8_t>(bioma));
   prefs.end();
 
@@ -420,6 +416,17 @@ void resetTouchState() {
   wasPressed = false;
 }
 
+void changeBrightness(int delta) {
+  brightness += delta;
+  if (brightness < 10) brightness = 10;
+  if (brightness > 100) brightness = 100;
+
+  int equivalent_brightness = map(brightness, 0, 100, 0, 1024);
+  analogWrite(TFT_BL, equivalent_brightness);
+  drawConfigScreen(false);
+}
+
+
 void checkTouchInput() {
   if (touch.available()) {
     switch (screen) {
@@ -473,16 +480,21 @@ void checkTouchInput() {
           int16_t cy = h / 2;
           int x = touch.data.x;
           int y = touch.data.y;
-          int bioma_y = cy - 40;
-          int seed_y = cy + (40 - 36);
+
+          // Spaziatura come nel drawConfigScreen()
+          int itemSpacing = 40;
+          int first_y = cy - itemSpacing;
+          int bioma_y = first_y;
+          int seed_y = first_y + itemSpacing;
+          int bright_y = seed_y + itemSpacing;  // nuova riga brightness
 
           // --- Mappatura per rotazione 90° ---
           int tx = y;      // X sullo schermo = Y del touch
           int ty = w - x;  // Y sullo schermo = larghezza - X del touch
 
           // --- Bottone centrale in basso ---
-          int cfg_w = 60;  // larghezza bottone
-          int cfg_h = 40;  // altezza bottone
+          int cfg_w = 60;
+          int cfg_h = 40;
           int cfg_x1 = cx - (cfg_w / 2);
           int cfg_x2 = cx + (cfg_w / 2);
           int cfg_y1 = h - cfg_h;
@@ -502,6 +514,10 @@ void checkTouchInput() {
           bool seedLeftPressed = (tx >= 0 && tx <= btn_w && ty >= seed_y && ty <= seed_y + btn_h);
           bool seedRightPressed = (tx >= w - btn_w && tx <= w && ty >= seed_y && ty <= seed_y + btn_h);
 
+          // --- Pulsanti Brightness ---
+          bool brightLeftPressed = (tx >= 0 && tx <= btn_w && ty >= bright_y && ty <= bright_y + btn_h);
+          bool brightRightPressed = (tx >= w - btn_w && tx <= w && ty >= bright_y && ty <= bright_y + btn_h);
+
           if (closePressed) {
             screen = Screen::MainScreen;
             draw(true, ts, stagione, temp, meteo, periodo);
@@ -517,6 +533,12 @@ void checkTouchInput() {
             while (touch.available()) delay(20);
           } else if (seedRightPressed) {
             changeSeed(1);
+            while (touch.available()) delay(20);
+          } else if (brightLeftPressed) {
+            changeBrightness(-10);  // decremento di 10
+            while (touch.available()) delay(20);
+          } else if (brightRightPressed) {
+            changeBrightness(10);  // incremento di 10
             while (touch.available()) delay(20);
           } else {
             resetTouchState();

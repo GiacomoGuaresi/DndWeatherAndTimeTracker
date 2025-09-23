@@ -31,7 +31,7 @@ Meteo meteo;
 Periodo periodo;
 
 Screen screen;
-
+int brightness; 
 
 #include "noise.h"
 #include "time_and_weather.h"
@@ -42,14 +42,14 @@ void setup() {
   tft.init();
   tft.setRotation(1);
   pinMode(TFT_BL, OUTPUT);
-  digitalWrite(TFT_BL, HIGH);
+  // digitalWrite(TFT_BL, HIGH);
 
   touch.begin();
 
   screen = Screen::MainScreen;
 
   prefs.begin("meteo", false);
-  
+
   // Recupero il seed, se non esiste lo genero
   seed = prefs.getUInt("seed", 0);
   if (seed == 0) {
@@ -71,6 +71,11 @@ void setup() {
   bioma = (Bioma)biomaVal;
   Serial.printf("Bioma: %u\n", bioma);
 
+  // Recupero la luminosità (default 1024)
+  brightness = prefs.getUInt("brightness", 1024);
+  Serial.printf("brightness: %lu\n", brightness);
+
+
   // Disegno la prima schermata
   stagione = getStagione(ts, offset);
   temp = generaTemperatura(ts, stagione, bioma, seed);
@@ -80,6 +85,16 @@ void setup() {
   draw(true, ts, stagione, temp, meteo, periodo);
 
   prefs.end();
+
+  
+  int ramp_brightness = 0;
+  int equivalent_brightness = map(brightness, 0, 100, 0, 1024);
+  do {
+    analogWrite(TFT_BL, ramp_brightness);
+    ramp_brightness += (equivalent_brightness / 100); 
+    delay(20);
+  } while(ramp_brightness <= equivalent_brightness);
+  analogWrite(TFT_BL, equivalent_brightness);
 }
 
 void loop() {
