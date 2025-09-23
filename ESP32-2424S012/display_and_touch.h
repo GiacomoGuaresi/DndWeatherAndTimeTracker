@@ -421,6 +421,10 @@ void changeBrightness(int delta) {
   if (brightness < 10) brightness = 10;
   if (brightness > 100) brightness = 100;
 
+  prefs.begin("meteo", false);  // namespace "meteo", modalità read/write
+  prefs.putUInt("brightness", brightness);  // salvo il timestamp
+  prefs.end();                  // chiudo per liberare risorse
+
   int equivalent_brightness = map(brightness, 0, 100, 0, 1024);
   analogWrite(TFT_BL, equivalent_brightness);
   drawConfigScreen(false);
