@@ -369,7 +369,7 @@ void handleTouch(int dir) {
     wasPressed = true;
     pressStartTime = now;
     lastTouchTime = now;
-    changeTime(dir, 1);  // variazione iniziale di 1
+    changeTime(dir, 4);  // variazione iniziale di 1
     return;
   }
 
@@ -397,7 +397,7 @@ void handleTouch(int dir) {
 
       int offset = abs(targetTs - ts);  // offset sempre positivo
 
-      changeTime(dir, offset);
+      changeTime(dir, offset*4);
       lastTouchTime = now;
     }
     return;
@@ -406,7 +406,7 @@ void handleTouch(int dir) {
 
   // gestione ripetizione "normale"
   if (now - lastTouchTime >= interval) {
-    changeTime(dir, 1);
+    changeTime(dir, 4);
     lastTouchTime = now;
   }
 }
