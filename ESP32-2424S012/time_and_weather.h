@@ -104,8 +104,8 @@ Meteo generaMeteo(int ts, int offset, Bioma b, int seed)
     const Meteo temp_winter[]   = { Meteo::Clear, Meteo::Cloud, Meteo::Rain, Meteo::Snow };
     const Meteo temp_spring[]   = { Meteo::Clear, Meteo::Cloud, Meteo::Rain, Meteo::Storm };
 
-    const Meteo cold_summer[]   = { Meteo::Clearar, Meteo::Cloud, Meteo::Rain };
-    const Meteo cold_autumn[]   = { Meteo::Clearar, Meteo::Cloud, Meteo::Rain, Meteo::Snow };
+    const Meteo cold_summer[]   = { Meteo::Clear, Meteo::Cloud, Meteo::Rain };
+    const Meteo cold_autumn[]   = { Meteo::Clear, Meteo::Cloud, Meteo::Rain, Meteo::Snow };
     const Meteo cold_winter[]   = { Meteo::Clear, Meteo::Cloud, Meteo::Rain, Meteo::Snow, Meteo::Frost };
     const Meteo cold_spring[]   = { Meteo::Clear, Meteo::Cloud, Meteo::Rain, Meteo::Snow };
 
