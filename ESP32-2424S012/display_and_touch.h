@@ -150,6 +150,74 @@ void draw_weather(Meteo meteo) {
   }
 }
 
+void draw_biome(Bioma bioma) {
+  uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
+  uint16_t COL_BG = tft.color565(0xEA, 0xE0, 0xC3);       // #eae0c3 (sfondo pergamena)
+  uint16_t COL_TEXT = tft.color565(0x00, 0x00, 0x00);     // #000000 (testo)
+  uint16_t COL_ACCENT = tft.color565(0xEA, 0xAF, 0x7C);   // #EAAF7C (decorazioni)
+
+  int r = 16;
+  int x = 44;
+  int y = 195;
+
+  tft.fillCircle(x, y, r + 5, COL_BG);
+
+  // Resetto 0,0
+  x = x - r;
+  y = y - r;
+
+  switch (bioma) {
+    case Bioma::Hot:
+      // Cactus 🌵
+      tft.fillCircle(x + 7, y + 9, 1, COL_ACCENT);
+      tft.fillCircle(x + 23, y + 11, 1, COL_ACCENT);
+      tft.fillCircle(x + 15, y + 6, 3, COL_ACCENT);
+
+      tft.fillRect(x + 6, y + 10, 4, 7, COL_ACCENT);
+      tft.fillRect(x + 22, y + 12, 4, 7, COL_ACCENT);
+      tft.fillRect(x + 12, y + 6, 8, 23, COL_ACCENT);
+
+      tft.fillRect(x + 9, y + 16, 3, 4, COL_ACCENT);
+      tft.fillRect(x + 7, y + 17, 2, 2, COL_ACCENT);
+
+      tft.fillRect(x + 20, y + 18, 3, 4, COL_ACCENT);
+      tft.fillRect(x + 23, y + 19, 2, 2, COL_ACCENT);
+      break;
+
+    case Bioma::Temperate:
+      // Albero 🌳
+      // Tronco
+      tft.fillRect(x + 14, y + 16, 4, 12, COL_ACCENT);
+
+      // Chioma (tondeggiante)
+      tft.fillCircle(x + 12, y + 12, 7, COL_ACCENT);
+      tft.fillCircle(x + 12, y + 14, 5, COL_ACCENT);
+      tft.fillCircle(x + 20, y + 15, 5, COL_ACCENT);
+      tft.fillCircle(x + 20, y + 11, 4, COL_ACCENT);
+      break;
+
+    case Bioma::Cold:
+      // Montagna 🏔
+      // Base triangolare
+      tft.fillTriangle(x + 12, y + 7,   
+                       x + 3, y + 25,  
+                       x + 21, y + 25,   
+                       COL_ACCENT);
+
+      tft.fillTriangle(x + 15, y + 25,
+                       x + 21, y + 14,
+                       x + 28, y + 25,
+                       COL_ACCENT);
+      
+      tft.fillTriangle(x + 12, y + 9,
+                       x + 11, y + 12,
+                       x + 14, y + 13,
+                       COL_BG);
+      
+      break;
+  }
+}
+
 void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, Periodo periodo) {
   // Definizione colori (convertiti HEX -> RGB565)
   uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
@@ -211,6 +279,9 @@ void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, 
   draw_weather(meteo);
 
   // Disegna/scrivi periodo giornata
+
+  // Disegna/scrivi Bioma
+  draw_biome(bioma);
 }
 
 void drawConfigScreen(bool fullRedraw) {
@@ -397,7 +468,7 @@ void handleTouch(int dir) {
 
       int offset = abs(targetTs - ts);  // offset sempre positivo
 
-      changeTime(dir, offset*4);
+      changeTime(dir, offset * 4);
       lastTouchTime = now;
     }
     return;
@@ -417,7 +488,7 @@ void resetTouchState() {
 }
 
 int gammaCorrect(int percent) {
-  float gamma = 2.2; // correzione standard
+  float gamma = 2.2;  // correzione standard
   float normalized = percent / 100.0;
   return (int)(pow(normalized, gamma) * 1023);
 }
