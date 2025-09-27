@@ -416,20 +416,28 @@ void resetTouchState() {
   wasPressed = false;
 }
 
+int gammaCorrect(int percent) {
+  float gamma = 2.2; // correzione standard
+  float normalized = percent / 100.0;
+  return (int)(pow(normalized, gamma) * 1023);
+}
+
 void changeBrightness(int delta) {
   brightness += delta;
   if (brightness < 10) brightness = 10;
   if (brightness > 100) brightness = 100;
 
-  prefs.begin("meteo", false);  // namespace "meteo", modalità read/write
-  prefs.putUInt("brightness", brightness);  // salvo il timestamp
-  prefs.end();                  // chiudo per liberare risorse
+  prefs.begin("meteo", false);
+  prefs.putUInt("brightness", brightness);
+  prefs.end();
 
-  int equivalent_brightness = map(brightness, 0, 100, 0, 1024);
-  analogWrite(TFT_BL, equivalent_brightness);
+  // Applica correzione gamma (≈2.2)
+  int equivalent_brightness = gammaCorrect(brightness);
+
+  ledcWrite(ledChannel, equivalent_brightness);
+
   drawConfigScreen(false);
 }
-
 
 void checkTouchInput() {
   if (touch.available()) {

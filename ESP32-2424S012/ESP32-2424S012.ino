@@ -31,7 +31,10 @@ Meteo meteo;
 Periodo periodo;
 
 Screen screen;
-int brightness; 
+int brightness;
+int ledChannel = 0;
+int freq = 5000;      // 5 kHz
+int resolution = 10;  // 10 bit (0–1023)
 
 #include "noise.h"
 #include "time_and_weather.h"
@@ -86,15 +89,19 @@ void setup() {
 
   prefs.end();
 
-  
-  int ramp_brightness = 0;
-  int equivalent_brightness = map(brightness, 0, 100, 0, 1024);
-  do {
-    analogWrite(TFT_BL, ramp_brightness);
-    ramp_brightness += (equivalent_brightness / 100); 
+  ledcSetup(ledChannel, freq, resolution);
+  ledcAttachPin(TFT_BL, ledChannel);
+
+  int equivalent_brightness = gammaCorrect(brightness);
+
+  // Animazione fade-in
+  for (int ramp = 0; ramp <= equivalent_brightness; ramp += 8) {
+    ledcWrite(ledChannel, ramp);
     delay(20);
-  } while(ramp_brightness <= equivalent_brightness);
-  analogWrite(TFT_BL, equivalent_brightness);
+  }
+
+  // Assicura il valore finale preciso
+  ledcWrite(ledChannel, equivalent_brightness);
 }
 
 void loop() {
