@@ -21,7 +21,7 @@ enum class Bioma
 };
 enum class Meteo
 {
-    Sun,
+    Clear,
     Cloud,
     Rain,
     Snow,
@@ -86,8 +86,8 @@ String meteoToString(Meteo m)
 {
     switch (m)
     {
-    case Meteo::Sun:
-        return "Sun";
+    case Meteo::Clear:
+        return "Clear";
     case Meteo::Cloud:
         return "Cloud";
     case Meteo::Rain:

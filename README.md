@@ -8,7 +8,7 @@ Perfect as a tabletop tool for Dungeon Masters and players who want to add varia
 ## ✨ Features
 
 - **Clock with 15-minute steps** (forward/backward with touch buttons).  
-- **Dynamic weather simulation** (sun, rain, clouds, snow, etc.).  
+- **Dynamic weather simulation** (clear, rain, clouds, snow, etc.).  
 - **Campaign day/hour tracking**.  
 - **3 available biomes**: hot, temperate, cold.  
 - **Customizable seed**: keeps consistency between different campaigns.  

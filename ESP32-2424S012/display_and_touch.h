@@ -11,7 +11,7 @@ void draw_weather(Meteo meteo) {
   int16_t r = 30;  // raggio base sole/nuvole
 
   switch (meteo) {
-    case Meteo::Sun:
+    case Meteo::Clear:
       {
         // Sole
         tft.fillCircle(cx, cy, r, TFT_YELLOW);
