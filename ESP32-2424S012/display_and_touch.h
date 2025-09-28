@@ -1,4 +1,4 @@
-void draw_weather(Meteo meteo) {
+void draw_weather(Meteo meteo, Periodo periodo) {
   uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
   uint16_t COL_BG = tft.color565(0xEA, 0xE0, 0xC3);       // #eae0c3 (sfondo pergamena)
   uint16_t COL_TEXT = tft.color565(0x00, 0x00, 0x00);     // #000000 (testo)
@@ -13,14 +13,20 @@ void draw_weather(Meteo meteo) {
   switch (meteo) {
     case Meteo::Clear:
       {
-        // Sole
-        tft.fillCircle(cx, cy, r, TFT_YELLOW);
-        for (int i = 0; i < 360; i += 30) {
-          int x1 = cx + cos(radians(i)) * (r + 5);
-          int y1 = cy + sin(radians(i)) * (r + 5);
-          int x2 = cx + cos(radians(i)) * (r + 20);
-          int y2 = cy + sin(radians(i)) * (r + 20);
-          tft.drawWedgeLine(x1, y1, x2, y2, 3, 3, TFT_YELLOW, COL_BG);
+        if (periodo == Periodo::Night) {
+          // Luna
+          tft.fillCircle(cx, cy, r, TFT_WHITE);
+          tft.fillCircle(cx + r / 2, cy - r / 3, r, COL_BG);
+        } else {
+          // Sole
+          tft.fillCircle(cx, cy, r, TFT_YELLOW);
+          for (int i = 0; i < 360; i += 30) {
+            int x1 = cx + cos(radians(i)) * (r + 5);
+            int y1 = cy + sin(radians(i)) * (r + 5);
+            int x2 = cx + cos(radians(i)) * (r + 20);
+            int y2 = cy + sin(radians(i)) * (r + 20);
+            tft.drawWedgeLine(x1, y1, x2, y2, 3, 3, TFT_YELLOW, COL_BG);
+          }
         }
         break;
       }
@@ -36,7 +42,7 @@ void draw_weather(Meteo meteo) {
     case Meteo::Rain:
       {
         // Nuvola
-        draw_weather(Meteo::Cloud);
+        draw_weather(Meteo::Cloud, periodo);
         // Gocce
         for (int i = -15; i <= 15; i += 15) {
           // tft.drawLine(cx + i, cy + 15, cx + i - 3, cy + 30, TFT_BLUE);
@@ -47,7 +53,7 @@ void draw_weather(Meteo meteo) {
     case Meteo::Snow:
       {
         // Nuvola
-        draw_weather(Meteo::Cloud);
+        draw_weather(Meteo::Cloud, periodo);
         // Fiocchi
         for (int i = -15; i <= 15; i += 15) {
           int fx = cx + i;
@@ -62,7 +68,7 @@ void draw_weather(Meteo meteo) {
     case Meteo::Storm:
       {
         // Nuvola
-        draw_weather(Meteo::Cloud);
+        draw_weather(Meteo::Cloud, periodo);
 
         // Gocce
         for (int i = -15; i <= 15; i += 30) {
@@ -83,15 +89,21 @@ void draw_weather(Meteo meteo) {
       }
     case Meteo::ScorchingSun:
       {
-        // Sole con alone rosso
-        tft.fillCircle(cx, cy, r + 10, TFT_ORANGE);
-        tft.fillCircle(cx, cy, r, TFT_YELLOW);
-        for (int i = 0; i < 360; i += 20) {
-          int x1 = cx + cos(radians(i)) * (r + 5);
-          int y1 = cy + sin(radians(i)) * (r + 5);
-          int x2 = cx + cos(radians(i)) * (r + 25);
-          int y2 = cy + sin(radians(i)) * (r + 25);
-          tft.drawWedgeLine(x1, y1, x2, y2, 2, 5, TFT_YELLOW, COL_BG);
+        if (periodo == Periodo::Night) {
+          // Luna
+          tft.fillCircle(cx, cy, r, TFT_WHITE);
+          tft.fillCircle(cx + r / 2, cy - r / 3, r, COL_BG);
+        } else {
+          // Sole con alone rosso
+          tft.fillCircle(cx, cy, r + 10, TFT_ORANGE);
+          tft.fillCircle(cx, cy, r, TFT_YELLOW);
+          for (int i = 0; i < 360; i += 20) {
+            int x1 = cx + cos(radians(i)) * (r + 5);
+            int y1 = cy + sin(radians(i)) * (r + 5);
+            int x2 = cx + cos(radians(i)) * (r + 25);
+            int y2 = cy + sin(radians(i)) * (r + 25);
+            tft.drawWedgeLine(x1, y1, x2, y2, 2, 5, TFT_YELLOW, COL_BG);
+          }
         }
         break;
       }
@@ -161,11 +173,11 @@ void draw_biome(Bioma bioma) {
   // BASSO SINISTRA
   // int x = 44;
   // int y = 195;
-  
+
   // BASSO DESTRA
   int x = 195;
   int y = 195;
-  
+
   tft.fillCircle(x, y, r + 5, COL_BG);
 
   // Resetto 0,0
@@ -235,7 +247,7 @@ void draw_periodo(Periodo periodo) {
   // BASSO SINISTRA
   int x = 44;
   int y = 195;
-  
+
   // BASSO DESTRA
   // int x = 195;
   // int y = 195;
@@ -378,7 +390,7 @@ void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, 
   tft.drawCentreString(String(buffer) + "c " + meteoToString(meteo), cx, h - 55, 2);
 
   // Disegna/scrivi meteo
-  draw_weather(meteo);
+  draw_weather(meteo, periodo);
 
   // Disegna/scrivi periodo giornata
   draw_periodo(periodo);
