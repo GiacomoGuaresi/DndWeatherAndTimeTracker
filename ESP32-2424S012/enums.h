@@ -9,7 +9,7 @@ enum class Stagione
 enum class Periodo
 {
     Night,
-    Moring,
+    Morning,
     Day,
     Evening
 };
@@ -58,8 +58,8 @@ String periodoToString(Periodo p)
     {
     case Periodo::Night:
         return "Night";
-    case Periodo::Moring:
-        return "Moring";
+    case Periodo::Morning:
+        return "Morning";
     case Periodo::Day:
         return "Day";
     case Periodo::Evening:

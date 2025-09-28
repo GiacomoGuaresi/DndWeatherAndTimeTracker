@@ -25,7 +25,7 @@ Periodo getPeriodo(int ts) {
   int totaleMinuti = ore * 60 + minuti;
 
   if (totaleMinuti >= 6 * 60 && totaleMinuti < 12 * 60)
-    return Periodo::Moring;
+    return Periodo::Morning;
   if (totaleMinuti >= 12 * 60 && totaleMinuti < 18 * 60)
     return Periodo::Day;
   if (totaleMinuti >= 18 * 60 && totaleMinuti < 22 * 60)

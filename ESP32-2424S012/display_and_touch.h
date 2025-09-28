@@ -157,9 +157,15 @@ void draw_biome(Bioma bioma) {
   uint16_t COL_ACCENT = tft.color565(0xEA, 0xAF, 0x7C);   // #EAAF7C (decorazioni)
 
   int r = 16;
-  int x = 44;
-  int y = 195;
 
+  // BASSO SINISTRA
+  // int x = 44;
+  // int y = 195;
+  
+  // BASSO DESTRA
+  int x = 195;
+  int y = 195;
+  
   tft.fillCircle(x, y, r + 5, COL_BG);
 
   // Resetto 0,0
@@ -199,21 +205,117 @@ void draw_biome(Bioma bioma) {
     case Bioma::Cold:
       // Montagna 🏔
       // Base triangolare
-      tft.fillTriangle(x + 12, y + 7,   
-                       x + 3, y + 25,  
-                       x + 21, y + 25,   
+      tft.fillTriangle(x + 12, y + 7,
+                       x + 3, y + 25,
+                       x + 21, y + 25,
                        COL_ACCENT);
 
       tft.fillTriangle(x + 15, y + 25,
                        x + 21, y + 14,
                        x + 28, y + 25,
                        COL_ACCENT);
-      
+
       tft.fillTriangle(x + 12, y + 9,
                        x + 11, y + 12,
                        x + 14, y + 13,
                        COL_BG);
-      
+
+      break;
+  }
+}
+
+void draw_periodo(Periodo periodo) {
+  uint16_t COL_PRIMARY = tft.color565(0xF0, 0x41, 0x42);  // #f04142 (rosso pulsanti)
+  uint16_t COL_BG = tft.color565(0xEA, 0xE0, 0xC3);       // #eae0c3 (sfondo pergamena)
+  uint16_t COL_TEXT = tft.color565(0x00, 0x00, 0x00);     // #000000 (testo)
+  uint16_t COL_ACCENT = tft.color565(0xEA, 0xAF, 0x7C);   // #EAAF7C (decorazioni)
+
+  int r = 16;
+
+  // BASSO SINISTRA
+  int x = 44;
+  int y = 195;
+  
+  // BASSO DESTRA
+  // int x = 195;
+  // int y = 195;
+
+  tft.fillCircle(x, y, r + 5, COL_BG);
+
+  // Resetto 0,0
+  x = x - r;
+  y = y - r;
+
+  switch (periodo) {
+    case Periodo::Night:
+      // Luna 🌙 (più piccola)
+      tft.fillCircle(x + 16, y + 16, 10, COL_ACCENT);
+      tft.fillCircle(x + 21, y + 12, 10, COL_BG);  // taglio per falce
+      break;
+
+    case Periodo::Morning:
+      // freccia
+      tft.fillTriangle(x + 16, y + 4,
+                       x + 10, y + 10,
+                       x + 22, y + 10,
+                       COL_ACCENT);
+
+      // raggi
+      for (int i = 0; i < 8; i++) {
+        float angle = i * PI / 4.0;        // 0, 45, 90... gradi
+        int x0 = x + 16 + cos(angle) * 7;  // bordo del sole
+        int y0 = y + 24 + sin(angle) * 7;
+        int x1 = x + 16 + cos(angle) * 9;  // 2 px oltre
+        int y1 = y + 24 + sin(angle) * 9;
+        tft.drawLine(x0, y0, x1, y1, COL_ACCENT);
+      }
+
+      // Sole che sorge 🌅
+      tft.fillCircle(x + 16, y + 24, 7, COL_ACCENT);  // più piccolo
+
+      tft.fillRect(x + 8, y + 24, 16, 12, COL_BG);              // nasconde metà inferiore
+      tft.drawLine(x + 4, y + 24, x + 28, y + 24, COL_ACCENT);  // orizzonte
+
+      break;
+    case Periodo::Day:
+
+      // raggi (8 direzioni, 45° ciascuna)
+      for (int i = 0; i < 8; i++) {
+        float angle = i * PI / 4.0;           // 0, 45, 90... gradi
+        float x0 = x + 16 + cos(angle) * 10;  // bordo sole
+        float y0 = y + 16 + sin(angle) * 10;
+        float x1 = x + 16 + cos(angle) * 14;  // +4 px
+        float y1 = y + 16 + sin(angle) * 14;
+        tft.drawWideLine(x0, y0, x1, y1, 2, COL_ACCENT, COL_BG);
+      }
+
+      // Sole ☀️
+      tft.fillCircle(x + 16, y + 16, 10, COL_ACCENT);  // raggio 10
+
+      break;
+
+    case Periodo::Evening:
+      // freccia
+      tft.fillTriangle(x + 16, y + 10,
+                       x + 10, y + 4,
+                       x + 22, y + 4,
+                       COL_ACCENT);
+
+      // raggi
+      for (int i = 0; i < 8; i++) {
+        float angle = i * PI / 4.0;        // 0, 45, 90... gradi
+        int x0 = x + 16 + cos(angle) * 7;  // bordo del sole
+        int y0 = y + 24 + sin(angle) * 7;
+        int x1 = x + 16 + cos(angle) * 9;  // 2 px oltre
+        int y1 = y + 24 + sin(angle) * 9;
+        tft.drawLine(x0, y0, x1, y1, COL_ACCENT);
+      }
+
+      // Sole che sorge 🌅
+      tft.fillCircle(x + 16, y + 24, 7, COL_ACCENT);  // più piccolo
+
+      tft.fillRect(x + 8, y + 24, 16, 12, COL_BG);              // nasconde metà inferiore
+      tft.drawLine(x + 4, y + 24, x + 28, y + 24, COL_ACCENT);  // orizzonte
       break;
   }
 }
@@ -279,6 +381,7 @@ void draw(bool fullRedraw, int ts, Stagione stagione, double temp, Meteo meteo, 
   draw_weather(meteo);
 
   // Disegna/scrivi periodo giornata
+  draw_periodo(periodo);
 
   // Disegna/scrivi Bioma
   draw_biome(bioma);
