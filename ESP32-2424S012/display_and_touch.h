@@ -460,7 +460,7 @@ void drawConfigScreen(bool fullRedraw) {
   // Titolo
   tft.setTextColor(COL_TEXT);
   tft.drawCentreString("Config", cx, 10, 4);
-  tft.drawCentreString("Version 0.0.1", cx, 35, 2);
+  tft.drawCentreString("Version 0.0.2", cx, 35, 2);
 
   // Bioma
   tft.setTextColor(COL_TEXT, COL_BG);
